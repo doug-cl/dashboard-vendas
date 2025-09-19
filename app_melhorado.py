@@ -8,7 +8,6 @@ from plotly.subplots import make_subplots
 import os
 import json
 import duckdb
-import os
 
 # ===== CONFIGURAÇÃO DA PÁGINA =====
 st.set_page_config(
@@ -94,9 +93,13 @@ def get_duckdb_con():
 def load_data_from_duckdb():
     """Carrega os dados da tabela 'vendas' do DuckDB, se ela existir."""
     con = get_duckdb_con()
-    table_exists = con.execute("SELECT count(*) FROM information_schema.tables WHERE table_name = 'vendas'").fetchone()[0]
-    if table_exists > 0:
-        return con.execute("SELECT * FROM vendas").df()
+    try:
+        table_exists = con.execute("SELECT count(*) FROM information_schema.tables WHERE table_name = 'vendas'").fetchone()[0]
+        if table_exists > 0:
+            return con.execute("SELECT * FROM vendas").df()
+    except duckdb.OperationalError:
+        # Se a tabela não existe, retorna None
+        return None
     return None
 
 def save_data_to_duckdb(df):
@@ -272,3 +275,24 @@ else:
         <p>Os dados serão consolidados e persistidos para futuras análises.</p>
     </div>
     """, unsafe_allow_html=True)
+
+# ===== FOOTER =====
+st.markdown("---")
+st.markdown("""
+<div style="text-align: center; color: #666; padding: 1rem;">
+    <p>📊 Dashboard de Análise de Vendas | Desenvolvido com Streamlit</p>
+    <p><small>Versão 2.1 - Com Persistência de Dados</small></p>
+</div>
+""", unsafe_allow_html=True)
+
+# ===== GERENCIAMENTO DE DADOS (SIDEBAR) =====
+st.sidebar.markdown("---")
+st.sidebar.markdown("## 🗑️ Gerenciamento de Dados")
+
+if st.sidebar.button("Limpar Todos os Dados Consolidados"):
+    try:
+        os.remove("dashboard_dados.duckdb")
+        st.sidebar.success("✅ Dados consolidados limpos com sucesso!")
+        st.rerun()
+    except FileNotFoundError:
+        st.sidebar.info("Nenhum dado consolidado para limpar.")
