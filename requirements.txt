@@ -1,8 +1,7 @@
 streamlit
 pandas
-plotly
-openpyxl
 altair
-plotly-express
-
-
+plotly
+gspread
+gspread-dataframe
+oauth2client
