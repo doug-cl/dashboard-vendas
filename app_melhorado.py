@@ -294,13 +294,20 @@ if uploaded_file is not None:
     if novo_df is not None:
         # Concatenar com dados existentes
         if not st.session_state.df_consolidado.empty:
+            # Verificar se as colunas são compatíveis antes de concatenar
             common_cols = list(set(st.session_state.df_consolidado.columns) & set(novo_df.columns))
-            st.session_state.df_consolidado = pd.concat([st.session_state.df_consolidado[common_cols], novo_df[common_cols]], ignore_index=True)
+            # Se houver colunas em comum, use-as para a concatenação
+            if common_cols:
+                st.session_state.df_consolidado = pd.concat([st.session_state.df_consolidado[common_cols], novo_df[common_cols]], ignore_index=True)
+            else:
+                st.sidebar.warning("⚠️ As colunas do novo arquivo não são compatíveis com os dados existentes. O novo arquivo não foi adicionado.")
         else:
             st.session_state.df_consolidado = novo_df
         
         salvar_dados(st.session_state.df_consolidado)
+        st.success("✅ Arquivo carregado e dados consolidados com sucesso! Atualizando dashboard...")
         st.rerun()
+
 
 df = st.session_state.df_consolidado
 
