@@ -143,7 +143,7 @@ st.markdown("""
 
 # ===== CONSTANTES E CONFIGURAÇÕES =====
 # Usaremos o ID da planilha do Google Sheets em vez de um nome de arquivo local
-GOOGLE_SHEET_ID = st.secrets["GOOGLE_SHEET_ID"]
+GOOGLE_SHEET_ID = st.secrets["1Bzu8sRNq-V1jFMc_Ow2AGtj_6TInXh9n0vRWWwlnKQQ"]
 
 # ===== FUNÇÕES AUXILIARES PARA GOOGLE SHEETS =====
 @st.cache_resource(ttl=3600)
