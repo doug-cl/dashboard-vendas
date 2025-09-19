@@ -274,13 +274,13 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ===== UPLOAD DO ARQUIVO =====
-st.markdown('<div class="section-header">📁 Upload do Arquivo de Dados</div>', unsafe_allow_html=True)
+st.markdown(\"<div class=\"section-header\">📁 Upload do Arquivo de Dados</div>\", unsafe_allow_html=True)
 
 col_upload1, col_upload2, col_upload3 = st.columns([1, 2, 1])
 
 with col_upload2:
     st.markdown("""
-    <div class="upload-section">
+    <div class=\"upload-section\">
         <h3>📤 Faça o upload do seu arquivo</h3>
         <p>Suportamos arquivos CSV, Excel (.xlsx) e Excel antigo (.xls)</p>
     </div>
@@ -292,7 +292,7 @@ with col_upload2:
         help="Arraste e solte seu arquivo aqui ou clique para selecionar"
     )
 
-# Carregar dados existentes ou inicializar DataFrame
+# Carregar dados existentes ou inicializar DataFrame na session_state
 if "df_consolidado" not in st.session_state:
     st.session_state.df_consolidado = carregar_dados_existentes()
 
@@ -323,9 +323,9 @@ elif uploaded_file is None and st.session_state.uploaded_file_processed:
     st.session_state.uploaded_file_processed = False
     st.rerun()
 
-
-
+# O DataFrame 'df' usado no restante do script deve sempre refletir o estado atual de df_consolidado
 df = st.session_state.df_consolidado
+
 
 if not df.empty:
     # ===== DEFINIÇÃO DAS COLUNAS =====
