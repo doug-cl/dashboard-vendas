@@ -174,7 +174,7 @@ def carregar_dados_existentes_gsheet():
         spreadsheet = client.open_by_id(GOOGLE_SHEET_ID)
         worksheet = spreadsheet.worksheet("Sheet1") # Assumindo que os dados estão na primeira aba
         df_existente = get_as_dataframe(worksheet, header=0, parse_dates=True)
-        df_existente = df_existente.dropna(how=\'all\') # Remove linhas completamente vazias
+        df_existente = df_existente.dropna(how='all') # Remove linhas completamente vazias
         
         if not df_existente.empty:
             st.sidebar.success(f"✅ Dados existentes ({df_existente.shape[0]} linhas) carregados do Google Sheets.")
