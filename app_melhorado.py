@@ -127,11 +127,9 @@ if df is None:
             else:
                 df = pd.read_excel(uploaded_file)
             
-            # Remove linhas e colunas vazias
             df.dropna(how='all', axis=0, inplace=True)
             df.dropna(how='all', axis=1, inplace=True)
             
-            # Salva o DataFrame no DuckDB
             save_data_to_duckdb(df)
             st.success("✅ Arquivo processado e dados salvos com sucesso!")
             st.info("🔄 Recarregando o aplicativo...")
@@ -140,18 +138,13 @@ if df is None:
             st.error(f"❌ Ocorreu um erro ao processar o arquivo: {e}")
 else:
     # --- PRÉ-PROCESSAMENTO DO DATAFRAME ---
-    # Convertendo colunas para o tipo correto (se necessário)
     df.columns = df.columns.str.strip()
     
-    # Tentando encontrar a coluna de data
     date_column = None
     for col in df.columns:
-        # Lógica para detectar colunas de data
         if 'data' in col.lower() or 'date' in col.lower():
             try:
-                # Tenta converter para o formato de data. Se falhar, não é uma coluna de data
                 df[col] = pd.to_datetime(df[col], errors='coerce', dayfirst=True)
-                # Remove linhas onde a conversão falhou (valores inválidos)
                 df.dropna(subset=[col], inplace=True)
                 date_column = col
                 break
@@ -163,7 +156,6 @@ else:
         df['Mês'] = df[date_column].dt.month
         df['Dia da Semana'] = df[date_column].dt.day_name(locale='pt_BR')
         
-        # Mapeando os dias da semana para português
         dias_semana = {
             'Monday': 'Segunda-feira',
             'Tuesday': 'Terça-feira',
@@ -182,7 +174,6 @@ else:
     colunas_numericas = df.select_dtypes(include=['number']).columns.tolist()
     colunas_categoricas = df.select_dtypes(include=['object']).columns.tolist()
     
-    # Seletor de colunas
     colunas_visuais = st.sidebar.multiselect(
         "Selecione as colunas para a análise visual:",
         options=df.columns.tolist(),
@@ -195,7 +186,6 @@ else:
     st.header("Análise Geral")
     
     if not df_filtrado.empty:
-        # Visão Geral das Métricas
         with st.container():
             col1, col2, col3 = st.columns(3)
             with col1:
@@ -282,24 +272,3 @@ else:
         <p>Os dados serão consolidados e persistidos para futuras análises.</p>
     </div>
     """, unsafe_allow_html=True)
-
-# ===== FOOTER =====
-st.markdown("---")
-st.markdown("""
-<div style="text-align: center; color: #666; padding: 1rem;">
-    <p>📊 Dashboard de Análise de Vendas | Desenvolvido com Streamlit</p>
-    <p><small>Versão 2.1 - Com Persistência de Dados</small></p>
-</div>
-""", unsafe_allow_html=True)
-
-# ===== GERENCIAMENTO DE DADOS (SIDEBAR) =====
-st.sidebar.markdown("---")
-st.sidebar.markdown("## 🗑️ Gerenciamento de Dados")
-
-if st.sidebar.button("Limpar Todos os Dados Consolidados"):
-    try:
-        os.remove("dashboard_dados.duckdb")
-        st.sidebar.success("✅ Dados consolidados limpos com sucesso!")
-        st.rerun()
-    except FileNotFoundError:
-        st.sidebar.info("Nenhum dado consolidado para limpar.")
