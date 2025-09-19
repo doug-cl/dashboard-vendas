@@ -266,7 +266,7 @@ else:
         )
     else:
         st.warning("⚠️ Por favor, selecione pelo menos uma coluna para visualizar.")
-else:
+    else:
     # Mensagem quando não há arquivo carregado
     st.markdown("""
     <div style="text-align: center; padding: 3rem; color: #666;">
