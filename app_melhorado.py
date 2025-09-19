@@ -390,6 +390,17 @@ if not df.empty:
     # ===== SIDEBAR DE FILTROS =====
     st.sidebar.markdown("## 🔍 Filtros Avançados")
     st.sidebar.markdown("---")
+    st.sidebar.markdown("---")
+    st.sidebar.markdown("## 🗑️ Gerenciamento de Dados")
+    if st.sidebar.button("Limpar Todos os Dados Consolidados"):
+       if os.path.exists(DATA_FILE):
+           os.remove(DATA_FILE)
+           st.sidebar.success("✅ Dados consolidados limpos com sucesso!")
+           st.session_state.df_consolidado = pd.DataFrame() # Limpa o DataFrame na sessão
+           st.rerun()
+       else:
+           st.sidebar.info("ℹ️ Nenhum dado consolidado para limpar.")
+
     
     # Filtro de mês
     if 'mês' in df.columns:
