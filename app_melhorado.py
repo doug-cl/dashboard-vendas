@@ -362,24 +362,35 @@ if not df.empty:
         """, unsafe_allow_html=True)
     
     with col_info3:
+    if COLUMN_DATA in df.columns and not df[COLUMN_DATA].empty and not pd.isna(df[COLUMN_DATA].min()):
+        min_date = df[COLUMN_DATA].min().strftime('%m/%Y')
+        max_date = df[COLUMN_DATA].max().strftime('%m/%Y')
         st.markdown(f"""
         <div class="metric-card">
             <h3>📅 Período</h3>
             <h2 style="color: #667eea;">
-                {df[COLUMN_DATA].min().strftime('%m/%Y') if COLUMN_DATA in df.columns else 'N/A'} - 
-                {df[COLUMN_DATA].max().strftime('%m/%Y') if COLUMN_DATA in df.columns else 'N/A'}
+                {min_date} - {max_date}
             </h2>
         </div>
         """, unsafe_allow_html=True)
-    
-        with col_info4:
-            file_size_kb = uploaded_file.size / 1024 if uploaded_file else 0
-            st.markdown(f"""
-            <div class="metric-card">
-                <h3>💾 Tamanho do Arquivo</h3>
-                <h2 style="color: #667eea;">{file_size_kb:.1f} KB</h2>
-            </div>
-            """, unsafe_allow_html=True) # Note: uploaded_file.size will only be available if a file was just uploaded
+    else:
+        st.markdown(f"""
+        <div class="metric-card">
+            <h3>📅 Período</h3>
+            <h2 style="color: #667eea;">N/A</h2>
+        </div>
+        """, unsafe_allow_html=True)
+
+with col_info4:
+    # uploaded_file.size só está disponível se um arquivo foi carregado na sessão atual
+    # Para o Streamlit Cloud, onde o arquivo é persistido, uploaded_file pode ser None
+    file_size_kb = uploaded_file.size / 1024 if uploaded_file else 0
+    st.markdown(f"""
+    <div class="metric-card">
+        <h3>💾 Tamanho do Arquivo</h3>
+        <h2 style="color: #667eea;">{file_size_kb:.1f} KB</h2>
+    </div>
+    """, unsafe_allow_html=True)
     
     # ===== SIDEBAR DE FILTROS =====
     st.sidebar.markdown("## 🔍 Filtros Avançados")
