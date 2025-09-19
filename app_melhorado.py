@@ -484,7 +484,7 @@ if not df.empty:
             st.metric(
                 "💰 Renda Estimada",
                 f"R$ {formatar_numero(renda_total)}",
-                delta=f"{(renda_total/df[COLUMN_RENDA_EstIMADA].sum()*100):.1f}% do total"
+                delta=f"{(renda_total/df[COLUMN_RENDA_ESTIMADA].sum()*100):.1f}% do total"
             )
     
     with col5:
