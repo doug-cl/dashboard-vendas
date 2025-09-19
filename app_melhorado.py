@@ -263,7 +263,7 @@ def criar_grafico_pizza(df, coluna, titulo):
         color_discrete_sequence=px.colors.qualitative.Set3
     )
     
-    fig.update_traces(textposition=\'inside\', textinfo=\'percent+label\')
+    fig.update_traces(textposition='inside', textinfo='percent+label')
     fig.update_layout(
         font=dict(size=12),
         showlegend=True,
