@@ -1,7 +1,5 @@
 streamlit
 pandas
-altair
 plotly
-gspread
-gspread-dataframe
-oauth2client
+altair
+duckdb
