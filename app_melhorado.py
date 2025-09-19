@@ -288,15 +288,17 @@ with col_upload2:
 if "df_consolidado" not in st.session_state:
     st.session_state.df_consolidado = carregar_dados_existentes()
 
-if uploaded_file is not None:
+# Variável de estado para controlar o processamento do upload
+if 'uploaded_file_processed' not in st.session_state:
+    st.session_state.uploaded_file_processed = False
+
+if uploaded_file is not None and not st.session_state.uploaded_file_processed:
     novo_df = processar_arquivo(uploaded_file)
     
     if novo_df is not None:
         # Concatenar com dados existentes
         if not st.session_state.df_consolidado.empty:
-            # Verificar se as colunas são compatíveis antes de concatenar
             common_cols = list(set(st.session_state.df_consolidado.columns) & set(novo_df.columns))
-            # Se houver colunas em comum, use-as para a concatenação
             if common_cols:
                 st.session_state.df_consolidado = pd.concat([st.session_state.df_consolidado[common_cols], novo_df[common_cols]], ignore_index=True)
             else:
@@ -305,8 +307,14 @@ if uploaded_file is not None:
             st.session_state.df_consolidado = novo_df
         
         salvar_dados(st.session_state.df_consolidado)
+        st.session_state.uploaded_file_processed = True # Marca como processado
         st.success("✅ Arquivo carregado e dados consolidados com sucesso! Atualizando dashboard...")
         st.rerun()
+elif uploaded_file is None and st.session_state.uploaded_file_processed:
+    # Resetar o estado se o arquivo foi 'limpo' (pelo 'x' ou por um novo upload)
+    st.session_state.uploaded_file_processed = False
+    st.rerun()
+
 
 
 df = st.session_state.df_consolidado
