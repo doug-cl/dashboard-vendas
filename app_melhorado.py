@@ -52,19 +52,27 @@ st.markdown("""
     
     /* Cards de métricas */
     .metric-card {
-        background: white;
-        padding: 1.5rem;
-        border-radius: 10px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        border-left: 4px solid #667eea;
-        margin-bottom: 1rem;
-        transition: transform 0.2s ease;
-    }
-    
-    .metric-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-    }
+    background: white;
+    padding: 1.5rem;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border-left: 4px solid #667eea;
+    margin-bottom: 1rem;
+    transition: transform 0.2s ease;
+}
+
+.metric-card h3 { /* <--- NOVA ADIÇÃO AQUI */
+    color: #333333; /* Um cinza escuro para melhor contraste */
+    font-size: 1rem;
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+}
+
+.metric-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
     
     /* Seções */
     .section-header {
