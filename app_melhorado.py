@@ -216,7 +216,7 @@ def processar_arquivo(uploaded_file):
         if file_extension == "csv":
             df = pd.read_csv(uploaded_file, decimal=",", encoding="utf-8")
         elif file_extension in ["xlsx", "xls"]:
-            df = pd.read_excel(uploaded_file, engine=\'openpyxl\')
+            df = pd.read_excel(uploaded_file, engine='openpyxl')
         else:
             st.error("❌ Formato de arquivo não suportado. Por favor, envie um arquivo .csv, .xlsx ou .xls.")
             return None
