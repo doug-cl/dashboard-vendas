@@ -361,7 +361,7 @@ if not df.empty:
         </div>
         """, unsafe_allow_html=True)
     
-    with col_info3:
+   with col_info3:
     if COLUMN_DATA in df.columns and not df[COLUMN_DATA].empty and not pd.isna(df[COLUMN_DATA].min()):
         min_date = df[COLUMN_DATA].min().strftime('%m/%Y')
         max_date = df[COLUMN_DATA].max().strftime('%m/%Y')
@@ -391,6 +391,7 @@ with col_info4:
         <h2 style="color: #667eea;">{file_size_kb:.1f} KB</h2>
     </div>
     """, unsafe_allow_html=True)
+
     
     # ===== SIDEBAR DE FILTROS =====
     st.sidebar.markdown("## 🔍 Filtros Avançados")
