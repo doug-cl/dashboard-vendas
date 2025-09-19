@@ -6,6 +6,12 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import os
+import json
+
+# Importações para Google Sheets
+import gspread
+from gspread_dataframe import set_with_dataframe, get_as_dataframe
+from oauth2client.service_account import ServiceAccountCredentials
 
 # ===== CONFIGURAÇÃO DA PÁGINA =====
 st.set_page_config(
@@ -19,11 +25,11 @@ st.set_page_config(
 st.markdown("""
 <style>
     /* Importar fonte Google */
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    @import url(\'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap\');
     
     /* Estilo geral */
     .main {
-        font-family: 'Inter', sans-serif;
+        font-family: \'Inter\', sans-serif;
     }
     
     /* Header principal */
@@ -52,27 +58,26 @@ st.markdown("""
     
     /* Cards de métricas */
     .metric-card {
-    background: white;
-    padding: 1.5rem;
-    border-radius: 10px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    border-left: 4px solid #667eea;
-    margin-bottom: 1rem;
-    transition: transform 0.2s ease;
-}
-
-.metric-card h3 { /* <--- NOVA ADIÇÃO AQUI */
-    color: #333333; /* Um cinza escuro para melhor contraste */
-    font-size: 1rem;
-    margin-top: 0;
-    margin-bottom: 0.5rem;
-}
-
-.metric-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-}
-
+        background: white;
+        padding: 1.5rem;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        border-left: 4px solid #667eea;
+        margin-bottom: 1rem;
+        transition: transform 0.2s ease;
+    }
+    
+    .metric-card h3 {
+        color: #333333; /* Um cinza escuro para melhor contraste */
+        font-size: 1rem;
+        margin-top: 0;
+        margin-bottom: 0.5rem;
+    }
+    
+    .metric-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
     
     /* Seções */
     .section-header {
@@ -138,33 +143,64 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ===== CONSTANTES E CONFIGURAÇÕES =====
-DATA_FILE = "dados_consolidados.csv"
+# Usaremos o ID da planilha do Google Sheets em vez de um nome de arquivo local
+GOOGLE_SHEET_ID = st.secrets["GOOGLE_SHEET_ID"]
 
-# ===== FUNÇÕES AUXILIARES =====
-
-def carregar_dados_existentes():
+# ===== FUNÇÕES AUXILIARES PARA GOOGLE SHEETS =====
+@st.cache_resource(ttl=3600)
+def get_gspread_client():
     """
-    Carrega o DataFrame consolidado de um arquivo CSV, se existir.
-    """
-    if os.path.exists(DATA_FILE):
-        try:
-            df_existente = pd.read_csv(DATA_FILE, decimal=",", encoding="utf-8")
-            st.sidebar.success(f"✅ Dados existentes ({df_existente.shape[0]} linhas) carregados de {DATA_FILE}.")
-            return df_existente
-        except Exception as e:
-            st.sidebar.error(f"❌ Erro ao carregar dados existentes: {str(e)}")
-            return pd.DataFrame()
-    return pd.DataFrame()
-
-def salvar_dados(df):
-    """
-    Salva o DataFrame consolidado em um arquivo CSV.
+    Autentica com o Google Sheets API usando as credenciais da conta de serviço.
     """
     try:
-        df.to_csv(DATA_FILE, index=False, decimal=",", encoding="utf-8")
-        st.sidebar.success(f"💾 Dados salvos com sucesso em {DATA_FILE}.")
+        # Carrega as credenciais do segredo do Streamlit
+        creds_json = st.secrets["GCP_SERVICE_ACCOUNT_JSON"]
+        creds_dict = json.loads(creds_json)
+        
+        scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+        creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
+        client = gspread.authorize(creds)
+        return client
     except Exception as e:
-        st.sidebar.error(f"❌ Erro ao salvar dados: {str(e)}")
+        st.error(f"❌ Erro de autenticação com Google Sheets: {e}")
+        st.stop()
+
+def carregar_dados_existentes_gsheet():
+    """
+    Carrega o DataFrame consolidado da planilha do Google Sheets.
+    """
+    client = get_gspread_client()
+    try:
+        spreadsheet = client.open_by_id(GOOGLE_SHEET_ID)
+        worksheet = spreadsheet.worksheet("Sheet1") # Assumindo que os dados estão na primeira aba
+        df_existente = get_as_dataframe(worksheet, header=0, parse_dates=True)
+        df_existente = df_existente.dropna(how=\'all\') # Remove linhas completamente vazias
+        
+        if not df_existente.empty:
+            st.sidebar.success(f"✅ Dados existentes ({df_existente.shape[0]} linhas) carregados do Google Sheets.")
+        return df_existente
+    except gspread.exceptions.SpreadsheetNotFound:
+        st.sidebar.warning(f"⚠️ Planilha com ID {GOOGLE_SHEET_ID} não encontrada. Criando DataFrame vazio.")
+        return pd.DataFrame()
+    except Exception as e:
+        st.sidebar.error(f"❌ Erro ao carregar dados do Google Sheets: {str(e)}")
+        return pd.DataFrame()
+
+def salvar_dados_gsheet(df):
+    """
+    Salva o DataFrame consolidado na planilha do Google Sheets.
+    """
+    client = get_gspread_client()
+    try:
+        spreadsheet = client.open_by_id(GOOGLE_SHEET_ID)
+        worksheet = spreadsheet.worksheet("Sheet1") # Assumindo que os dados estão na primeira aba
+        
+        # Limpa o conteúdo existente e escreve o novo DataFrame
+        worksheet.clear()
+        set_with_dataframe(worksheet, df, include_index=False)
+        st.sidebar.success(f"💾 Dados salvos com sucesso no Google Sheets ({df.shape[0]} linhas).")
+    except Exception as e:
+        st.sidebar.error(f"❌ Erro ao salvar dados no Google Sheets: {str(e)}")
 
 def processar_arquivo(uploaded_file):
     """
@@ -180,7 +216,7 @@ def processar_arquivo(uploaded_file):
         if file_extension == "csv":
             df = pd.read_csv(uploaded_file, decimal=",", encoding="utf-8")
         elif file_extension in ["xlsx", "xls"]:
-            df = pd.read_excel(uploaded_file, engine='openpyxl')
+            df = pd.read_excel(uploaded_file, engine=\'openpyxl\')
         else:
             st.error("❌ Formato de arquivo não suportado. Por favor, envie um arquivo .csv, .xlsx ou .xls.")
             return None
@@ -227,7 +263,7 @@ def criar_grafico_pizza(df, coluna, titulo):
         color_discrete_sequence=px.colors.qualitative.Set3
     )
     
-    fig.update_traces(textposition='inside', textinfo='percent+label')
+    fig.update_traces(textposition=\'inside\', textinfo=\'percent+label\')
     fig.update_layout(
         font=dict(size=12),
         showlegend=True,
@@ -251,7 +287,7 @@ def criar_grafico_barras(df, x_col, y_col, titulo):
         y=y_col,
         title=titulo,
         color=y_col,
-        color_continuous_scale='Viridis'
+        color_continuous_scale=\'Viridis\'
     )
     
     fig.update_layout(
@@ -274,16 +310,13 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ===== UPLOAD DO ARQUIVO =====
-st.markdown("""
-<div class="section-header">📁 Upload do Arquivo de Dados</div>
-""", unsafe_allow_html=True)
-
+st.markdown("<div class=\'section-header\'>📁 Upload do Arquivo de Dados</div>", unsafe_allow_html=True)
 
 col_upload1, col_upload2, col_upload3 = st.columns([1, 2, 1])
 
 with col_upload2:
     st.markdown("""
-    <div class=\"upload-section\">
+    <div class="upload-section">
         <h3>📤 Faça o upload do seu arquivo</h3>
         <p>Suportamos arquivos CSV, Excel (.xlsx) e Excel antigo (.xls)</p>
     </div>
@@ -297,10 +330,10 @@ with col_upload2:
 
 # Carregar dados existentes ou inicializar DataFrame na session_state
 if "df_consolidado" not in st.session_state:
-    st.session_state.df_consolidado = carregar_dados_existentes()
+    st.session_state.df_consolidado = carregar_dados_existentes_gsheet()
 
 # Variável de estado para controlar o processamento do upload
-if 'uploaded_file_processed' not in st.session_state:
+if \'uploaded_file_processed\' not in st.session_state:
     st.session_state.uploaded_file_processed = False
 
 if uploaded_file is not None and not st.session_state.uploaded_file_processed:
@@ -317,33 +350,32 @@ if uploaded_file is not None and not st.session_state.uploaded_file_processed:
         else:
             st.session_state.df_consolidado = novo_df
         
-        salvar_dados(st.session_state.df_consolidado)
+        salvar_dados_gsheet(st.session_state.df_consolidado)
         st.session_state.uploaded_file_processed = True # Marca como processado
         st.success("✅ Arquivo carregado e dados consolidados com sucesso! Atualizando dashboard...")
         st.rerun()
 elif uploaded_file is None and st.session_state.uploaded_file_processed:
-    # Resetar o estado se o arquivo foi 'limpo' (pelo 'x' ou por um novo upload)
+    # Resetar o estado se o arquivo foi \'limpo\' (pelo \'x\' ou por um novo upload)
     st.session_state.uploaded_file_processed = False
     st.rerun()
 
-# O DataFrame 'df' usado no restante do script deve sempre refletir o estado atual de df_consolidado
+# O DataFrame \'df\' usado no restante do script deve sempre refletir o estado atual de df_consolidado
 df = st.session_state.df_consolidado
-
 
 if not df.empty:
     # ===== DEFINIÇÃO DAS COLUNAS =====
-    COLUMN_DATA = 'data'
-    COLUMN_VALOR_TOTAL = 'valor total'
-    COLUMN_QUANTIDADE = 'quantidade'
-    COLUMN_TAXA = 'taxa'
-    COLUMN_RENDA_ESTIMADA = 'renda estimada'
-    COLUMN_SUBTOTAL_PRODUTO = 'subtotal do produto'
-    COLUMN_TAMANHO = 'tamanho'
-    COLUMN_PRODUTO = 'produto'
-    COLUMN_TIPO = 'tipo'
-    COLUMN_STATUS = 'status'
-    COLUMN_DEVOLUCAO = 'quantidade devolução'
-    COLUMN_UF = 'uf'
+    COLUMN_DATA = \'data\'
+    COLUMN_VALOR_TOTAL = \'valor total\'
+    COLUMN_QUANTIDADE = \'quantidade\'
+    COLUMN_TAXA = \'taxa\'
+    COLUMN_RENDA_ESTIMADA = \'renda estimada\'
+    COLUMN_SUBTOTAL_PRODUTO = \'subtotal do produto\'
+    COLUMN_TAMANHO = \'tamanho\'
+    COLUMN_PRODUTO = \'produto\'
+    COLUMN_TIPO = \'tipo\'
+    COLUMN_STATUS = \'status\'
+    COLUMN_DEVOLUCAO = \'quantidade devolução\'
+    COLUMN_UF = \'uf\'
     
     # ===== PROCESSAMENTO DOS DADOS =====
     
@@ -351,20 +383,20 @@ if not df.empty:
     colunas_numericas = [COLUMN_VALOR_TOTAL, COLUMN_RENDA_ESTIMADA, COLUMN_SUBTOTAL_PRODUTO, COLUMN_TAXA, COLUMN_DEVOLUCAO]
     for col in colunas_numericas:
         if col in df.columns:
-            df[col] = pd.to_numeric(df[col], errors='coerce')
+            df[col] = pd.to_numeric(df[col], errors=\'coerce\')
     
     # Processamento de datas
     if COLUMN_DATA in df.columns:
         try:
-            df[COLUMN_DATA] = pd.to_datetime(df[COLUMN_DATA], format='%d/%m/%Y', errors='coerce')
+            df[COLUMN_DATA] = pd.to_datetime(df[COLUMN_DATA], format=\'%d/%m/%Y\', errors=\'coerce\')
             df.dropna(subset=[COLUMN_DATA], inplace=True)
-            df['mês'] = df[COLUMN_DATA].dt.month.apply(lambda x: calendar.month_name[x].capitalize())
-            df['ano'] = df[COLUMN_DATA].dt.year
+            df[\'mês\'] = df[COLUMN_DATA].dt.month.apply(lambda x: calendar.month_name[x].capitalize())
+            df[\'ano\'] = df[COLUMN_DATA].dt.year
         except Exception as e:
-            st.warning(f"⚠️ Não foi possível converter a coluna '{COLUMN_DATA}' para o formato de data.")
+            st.warning(f"⚠️ Não foi possível converter a coluna \'{COLUMN_DATA}\' para o formato de data.")
     
     # ===== INFORMAÇÕES GERAIS =====
-    st.markdown('<div class="section-header">📋 Informações Gerais do Dataset</div>', unsafe_allow_html=True)
+    st.markdown("<div class=\'section-header\'>📋 Informações Gerais do Dataset</div>", unsafe_allow_html=True)
     
     col_info1, col_info2, col_info3, col_info4 = st.columns(4)
     
@@ -386,8 +418,8 @@ if not df.empty:
     
     with col_info3:
         if COLUMN_DATA in df.columns and not df[COLUMN_DATA].empty and not pd.isna(df[COLUMN_DATA].min()):
-            min_date = df[COLUMN_DATA].min().strftime('%m/%Y')
-            max_date = df[COLUMN_DATA].max().strftime('%m/%Y')
+            min_date = df[COLUMN_DATA].min().strftime(\'%m/%Y\')
+            max_date = df[COLUMN_DATA].max().strftime(\'%m/%Y\')
             st.markdown(f"""
             <div class="metric-card">
                 <h3>📅 Período</h3>
@@ -405,7 +437,13 @@ if not df.empty:
             """, unsafe_allow_html=True)
 
     with col_info4:
-        file_size_kb = uploaded_file.size / 1024 if uploaded_file else 0
+        # uploaded_file.size só está disponível se um arquivo foi carregado na sessão atual
+        # Para o Streamlit Cloud, onde o arquivo é persistido, uploaded_file pode ser None
+        # Para Google Sheets, o tamanho do arquivo não é diretamente aplicável aqui, mas podemos manter a variável para evitar erros
+        file_size_kb = 0 # Não temos o tamanho do arquivo do GSheet diretamente aqui
+        if uploaded_file is not None:
+            file_size_kb = uploaded_file.size / 1024
+
         st.markdown(f"""
         <div class="metric-card">
             <h3>💾 Tamanho do Arquivo</h3>
@@ -416,31 +454,20 @@ if not df.empty:
     # ===== SIDEBAR DE FILTROS =====
     st.sidebar.markdown("## 🔍 Filtros Avançados")
     st.sidebar.markdown("---")
-    st.sidebar.markdown("---")
-    st.sidebar.markdown("## 🗑️ Gerenciamento de Dados")
-    if st.sidebar.button("Limpar Todos os Dados Consolidados"):
-       if os.path.exists(DATA_FILE):
-           os.remove(DATA_FILE)
-           st.sidebar.success("✅ Dados consolidados limpos com sucesso!")
-           st.session_state.df_consolidado = pd.DataFrame() # Limpa o DataFrame na sessão
-           st.rerun()
-       else:
-           st.sidebar.info("ℹ️ Nenhum dado consolidado para limpar.")
-
     
     # Filtro de mês
-    if 'mês' in df.columns:
-        meses_en = ['January', 'February', 'March', 'April', 'May', 'June', 
-                   'July', 'August', 'September', 'October', 'November', 'December']
-        all_meses = sorted(df['mês'].unique(), key=lambda x: meses_en.index(x))
+    if \'mês\' in df.columns:
+        meses_en = [\'January\', \'February\', \'March\', \'April\', \'May\', \'June\', 
+                   \'July\', \'August\', \'September\', \'October\', \'November\', \'December\']
+        all_meses = sorted(df[\'mês\'].unique(), key=lambda x: meses_en.index(x))
         selected_mes = st.sidebar.selectbox("📅 Selecione o Mês:", ["Todos"] + all_meses)
     else:
         selected_mes = "Todos"
     
     # Filtro de tamanho
     if COLUMN_TAMANHO in df.columns:
-        df[COLUMN_TAMANHO] = pd.to_numeric(df[COLUMN_TAMANHO], errors='coerce').astype('Int64')
-        df[COLUMN_TAMANHO] = df[COLUMN_TAMANHO].astype(str).str.replace('<NA>', 'NaN')
+        df[COLUMN_TAMANHO] = pd.to_numeric(df[COLUMN_TAMANHO], errors=\'coerce\').astype(\'Int64\')
+        df[COLUMN_TAMANHO] = df[COLUMN_TAMANHO].astype(str).str.replace(\'<NA>\', \'NaN\')
         all_tamanhos = sorted(df[COLUMN_TAMANHO].unique())
         selected_tamanhos = st.sidebar.multiselect("📏 Selecione os Tamanhos:", all_tamanhos, default=all_tamanhos)
     else:
@@ -465,7 +492,7 @@ if not df.empty:
     # Aplicar filtros
     df_filtrado = df.copy()
     if selected_mes != "Todos":
-        df_filtrado = df_filtrado[df_filtrado['mês'] == selected_mes]
+        df_filtrado = df_filtrado[df_filtrado[\'mês\'] == selected_mes]
     if selected_tamanhos:
         df_filtrado = df_filtrado[df_filtrado[COLUMN_TAMANHO].isin(selected_tamanhos)]
     if selected_produtos:
@@ -484,7 +511,7 @@ if not df.empty:
     """, unsafe_allow_html=True)
     
     # ===== PAINEL DE KPIs =====
-    st.markdown('<div class="section-header">💰 Indicadores Principais (KPIs)</div>', unsafe_allow_html=True)
+    st.markdown("<div class=\'section-header\'>💰 Indicadores Principais (KPIs)</div>", unsafe_allow_html=True)
     
     col1, col2, col3, col4, col5 = st.columns(5)
     
@@ -534,15 +561,15 @@ if not df.empty:
             )
     
     # ===== ANÁLISES VISUAIS =====
-    st.markdown('<div class="section-header">📊 Análises Visuais Interativas</div>', unsafe_allow_html=True)
+    st.markdown("<div class=\'section-header\'>📊 Análises Visuais Interativas</div>", unsafe_allow_html=True)
     
     # Gráficos em duas colunas
     col_graf1, col_graf2 = st.columns(2)
     
     with col_graf1:
         st.subheader("📈 Vendas por Mês")
-        if 'mês' in df_filtrado.columns and COLUMN_VALOR_TOTAL in df_filtrado.columns:
-            fig_mes = criar_grafico_barras(df_filtrado, 'mês', COLUMN_VALOR_TOTAL, "Vendas por Mês")
+        if \'mês\' in df_filtrado.columns and COLUMN_VALOR_TOTAL in df_filtrado.columns:
+            fig_mes = criar_grafico_barras(df_filtrado, \'mês\', COLUMN_VALOR_TOTAL, "Vendas por Mês")
             if fig_mes:
                 st.plotly_chart(fig_mes, use_container_width=True)
     
@@ -561,7 +588,7 @@ if not df.empty:
             st.plotly_chart(fig_devolucao, use_container_width=True)
     
     # ===== TABELAS ANALÍTICAS =====
-    st.markdown('<div class="section-header">📋 Tabelas Analíticas Detalhadas</div>', unsafe_allow_html=True)
+    st.markdown("<div class=\'section-header\'>📋 Tabelas Analíticas Detalhadas</div>", unsafe_allow_html=True)
     
     # Abas para organizar as tabelas
     tab1, tab2, tab3, tab4 = st.tabs(["📦 Por Tamanho", "🗓️ Por Mês", "🌍 Por UF", "📊 Resumo Geral"])
@@ -585,9 +612,9 @@ if not df.empty:
     
     with tab2:
         st.subheader("Análise Temporal - Quantidade por Mês e Tamanho")
-        if 'mês' in df_filtrado.columns and COLUMN_TAMANHO in df_filtrado.columns and COLUMN_QUANTIDADE in df_filtrado.columns:
-            tabela_mes_tamanho = df_filtrado.groupby(['mês', COLUMN_TAMANHO])[COLUMN_QUANTIDADE].sum().reset_index()
-            tabela_pivot = tabela_mes_tamanho.pivot(index='mês', columns=COLUMN_TAMANHO, values=COLUMN_QUANTIDADE).fillna(0)
+        if \'mês\' in df_filtrado.columns and COLUMN_TAMANHO in df_filtrado.columns and COLUMN_QUANTIDADE in df_filtrado.columns:
+            tabela_mes_tamanho = df_filtrado.groupby([\'mês\', COLUMN_TAMANHO])[COLUMN_QUANTIDADE].sum().reset_index()
+            tabela_pivot = tabela_mes_tamanho.pivot(index=\'mês\', columns=COLUMN_TAMANHO, values=COLUMN_QUANTIDADE).fillna(0)
             st.dataframe(tabela_pivot, use_container_width=True)
     
     with tab3:
@@ -605,7 +632,7 @@ if not df.empty:
             st.dataframe(resumo_stats, use_container_width=True)
     
     # ===== VISUALIZAÇÃO PERSONALIZADA =====
-    st.markdown('<div class="section-header">🔍 Exploração Personalizada dos Dados</div>', unsafe_allow_html=True)
+    st.markdown("<div class=\'section-header\'>🔍 Exploração Personalizada dos Dados</div>", unsafe_allow_html=True)
     
     col_custom1, col_custom2 = st.columns([2, 1])
     
@@ -626,7 +653,7 @@ if not df.empty:
             st.download_button(
                 label="⬇️ Baixar CSV",
                 data=csv,
-                file_name=f"dados_filtrados_{pd.Timestamp.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                file_name=f"dados_filtrados_{pd.Timestamp.now().strftime(\'%Y%m%d_%H%M%S\')}.csv",
                 mime="text/csv"
             )
     
@@ -659,5 +686,20 @@ st.markdown("""
     <p><small>Versão 2.1 - Com Persistência de Dados</small></p>
 </div>
 """, unsafe_allow_html=True)
+
+# ===== GERENCIAMENTO DE DADOS (SIDEBAR) =====
+st.sidebar.markdown("---")
+st.sidebar.markdown("## 🗑️ Gerenciamento de Dados")
+if st.sidebar.button("Limpar Todos os Dados Consolidados"):
+    try:
+        client = get_gspread_client()
+        spreadsheet = client.open_by_id(GOOGLE_SHEET_ID)
+        worksheet = spreadsheet.worksheet("Sheet1")
+        worksheet.clear()
+        st.sidebar.success("✅ Dados consolidados limpos com sucesso no Google Sheets!")
+        st.session_state.df_consolidado = pd.DataFrame() # Limpa o DataFrame na sessão
+        st.rerun()
+    except Exception as e:
+        st.sidebar.error(f"❌ Erro ao limpar dados no Google Sheets: {str(e)}")
 
 
