@@ -274,7 +274,10 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ===== UPLOAD DO ARQUIVO =====
-st.markdown(\"<div class=\"section-header\">📁 Upload do Arquivo de Dados</div>\", unsafe_allow_html=True)
+st.markdown("""
+<div class="section-header">📁 Upload do Arquivo de Dados</div>
+""", unsafe_allow_html=True)
+
 
 col_upload1, col_upload2, col_upload3 = st.columns([1, 2, 1])
 
