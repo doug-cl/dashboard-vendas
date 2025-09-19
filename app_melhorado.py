@@ -6,7 +6,6 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import os
-import json
 import duckdb
 
 # ===== CONFIGURAÇÃO DA PÁGINA =====
@@ -98,7 +97,6 @@ def load_data_from_duckdb():
         if table_exists > 0:
             return con.execute("SELECT * FROM vendas").df()
     except duckdb.OperationalError:
-        # Se a tabela não existe, retorna None
         return None
     return None
 
@@ -266,7 +264,7 @@ else:
         )
     else:
         st.warning("⚠️ Por favor, selecione pelo menos uma coluna para visualizar.")
-    else:
+else:
     # Mensagem quando não há arquivo carregado
     st.markdown("""
     <div style="text-align: center; padding: 3rem; color: #666;">
