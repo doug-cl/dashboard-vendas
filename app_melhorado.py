@@ -674,5 +674,4 @@ if st.sidebar.button("Limpar Todos os Dados Consolidados"):
         st.rerun()
     else:
         st.sidebar.info("ℹ️ Nenhum dado consolidado para limpar.")
-'''
 
