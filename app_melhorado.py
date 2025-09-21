@@ -323,8 +323,6 @@ if uploaded_file is not None:
 df = st.session_state.df_consolidado
 
 
-df = st.session_state.df_consolidado
-
 if not df.empty:
     # ===== DEFINIÇÃO DAS COLUNAS =====
     COLUMN_DATA = 'data'
