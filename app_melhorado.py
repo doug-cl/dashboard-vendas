@@ -243,7 +243,7 @@ def criar_grafico_barras(df, x_col, y_col, titulo):
         y=y_col,
         title=titulo,
         color=y_col,
-        color_continuous_scale=\'Viridis\'
+        color_continuous_scale='Viridis'
     )
     
     fig.update_layout(
