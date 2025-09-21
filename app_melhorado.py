@@ -442,7 +442,8 @@ if not df.empty:
     <div class="stats-container">
         <h4>📊 Dados Filtrados</h4>
         <p><strong>Registros:</strong> {df_filtrado.shape[0]:,}</p>
-        <p><strong>% do Total:</strong> {(df_filtrado.shape[0]/df.shape[0]*100):.1f}%</p>
+        <p><strong>% do Total:</strong> {((df_filtrado.shape[0]/df.shape[0]*100) if df.shape[0] > 0 else 0.0):.1f}%</p>
+
     </div>
     """, unsafe_allow_html=True)
     
