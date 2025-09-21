@@ -284,23 +284,44 @@ with col_upload2:
         help="Arraste e solte seu arquivo aqui ou clique para selecionar"
     )
 
-# Carregar dados existentes ou inicializar DataFrame
+uploaded_file = st.file_uploader(
+    "Escolha um arquivo",
+    type=["csv", "xlsx", "xls"],
+    help="Arraste e solte seu arquivo aqui ou clique para selecionar"
+)
+
+# Carregar dados existentes ou inicializar DataFrame na session_state
 if "df_consolidado" not in st.session_state:
     st.session_state.df_consolidado = carregar_dados_existentes()
 
+# Processar o arquivo carregado apenas se houver um e ele ainda não foi processado
 if uploaded_file is not None:
-    novo_df = processar_arquivo(uploaded_file)
-    
-    if novo_df is not None:
-        # Concatenar com dados existentes
-        if not st.session_state.df_consolidado.empty:
-            common_cols = list(set(st.session_state.df_consolidado.columns) & set(novo_df.columns))
-            st.session_state.df_consolidado = pd.concat([st.session_state.df_consolidado[common_cols], novo_df[common_cols]], ignore_index=True)
-        else:
-            st.session_state.df_consolidado = novo_df
+    # Usar um hash do arquivo para verificar se já foi processado nesta sessão
+    file_hash = hash(uploaded_file.getvalue())
+    if "last_uploaded_file_hash" not in st.session_state or st.session_state.last_uploaded_file_hash != file_hash:
+        novo_df = processar_arquivo(uploaded_file)
         
-        salvar_dados(st.session_state.df_consolidado)
-        st.rerun()
+        if novo_df is not None:
+            # Concatenar com dados existentes
+            if not st.session_state.df_consolidado.empty:
+                common_cols = list(set(st.session_state.df_consolidado.columns) & set(novo_df.columns))
+                if common_cols:
+                    st.session_state.df_consolidado = pd.concat([st.session_state.df_consolidado[common_cols], novo_df[common_cols]], ignore_index=True)
+                else:
+                    st.sidebar.warning("⚠️ As colunas do novo arquivo não são compatíveis com os dados existentes. O novo arquivo não foi adicionado.")
+            else:
+                st.session_state.df_consolidado = novo_df
+            
+            salvar_dados(st.session_state.df_consolidado)
+            st.session_state.last_uploaded_file_hash = file_hash # Armazena o hash do arquivo processado
+            st.success("✅ Arquivo carregado e dados consolidados com sucesso! Atualizando dashboard...")
+            st.rerun()
+    else:
+        st.info("Arquivo já processado nesta sessão.")
+
+# O DataFrame 'df' usado no restante do script deve sempre refletir o estado atual de df_consolidado
+df = st.session_state.df_consolidado
+
 
 df = st.session_state.df_consolidado
 
