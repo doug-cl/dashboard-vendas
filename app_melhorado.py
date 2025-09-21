@@ -298,7 +298,7 @@ with col_upload2:
     uploaded_file = st.file_uploader(
         "Escolha um arquivo",
         type=["csv", "xlsx", "xls"],
-        help="Arraste e solte seu arquivo aqui ou clique para selecionar"
+        help="Arraste e solte seu arquivo aqui ou clique para selecionar",
         key="file_uploader_key"
     )
 
