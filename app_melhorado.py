@@ -264,6 +264,14 @@ def criar_grafico_barras(df, x_col, y_col, titulo):
 
 # ===== INTERFACE PRINCIPAL =====
 
+# ... código existente do st.file_uploader ...
+
+if st.button("Limpar Upload Atual"):
+    st.session_state["file_uploader_key"] = ""
+    st.session_state.last_uploaded_file_hash = None # Limpa o hash para permitir novo upload
+    st.rerun()
+
+
 # Header principal
 st.markdown("""
 <div class="main-header">
@@ -291,6 +299,7 @@ with col_upload2:
         "Escolha um arquivo",
         type=["csv", "xlsx", "xls"],
         help="Arraste e solte seu arquivo aqui ou clique para selecionar"
+        key="file_uploader_key"
     )
 
 # Carregar dados existentes ou inicializar DataFrame na session_state
