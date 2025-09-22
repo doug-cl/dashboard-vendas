@@ -179,7 +179,7 @@ def processar_arquivo(uploaded_file):
         if file_extension == "csv":
             df = pd.read_csv(uploaded_file, decimal=",", encoding="utf-8")
         elif file_extension in ["xlsx", "xls"]:
-            df = pd.read_excel(uploaded_file, engine=\'openpyxl\')
+            df = pd.read_excel(uploaded_file, engine='openpyxl')
         else:
             st.error("❌ Formato de arquivo não suportado. Por favor, envie um arquivo .csv, .xlsx ou .xls.")
             return None
@@ -226,7 +226,7 @@ def criar_grafico_pizza(df, coluna, titulo):
         color_discrete_sequence=px.colors.qualitative.Set3
     )
     
-    fig.update_traces(textposition=\'inside\', textinfo=\'percent+label\')
+    fig.update_traces(textposition='inside', textinfo='percent+label')
     fig.update_layout(
         font=dict(size=12),
         showlegend=True,
