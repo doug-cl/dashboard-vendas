@@ -19,7 +19,7 @@ st.set_page_config(
 st.markdown("""
 <style>
     /* Importar fonte Google */
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap' );
     
     /* Estilo geral */
     .main {
@@ -55,7 +55,7 @@ st.markdown("""
         background: white;
         padding: 1.5rem;
         border-radius: 10px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         border-left: 4px solid #667eea;
         margin-bottom: 1rem;
         transition: transform 0.2s ease;
@@ -70,7 +70,7 @@ st.markdown("""
     
     .metric-card:hover {
         transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
     }
     
     /* Seções */
@@ -103,7 +103,7 @@ st.markdown("""
     .dataframe {
         border-radius: 8px;
         overflow: hidden;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
     
     /* Alertas customizados */
@@ -179,7 +179,7 @@ def processar_arquivo(uploaded_file):
         if file_extension == "csv":
             df = pd.read_csv(uploaded_file, decimal=",", encoding="utf-8")
         elif file_extension in ["xlsx", "xls"]:
-            df = pd.read_excel(uploaded_file, engine='openpyxl')
+            df = pd.read_excel(uploaded_file, engine=\'openpyxl\')
         else:
             st.error("❌ Formato de arquivo não suportado. Por favor, envie um arquivo .csv, .xlsx ou .xls.")
             return None
@@ -226,7 +226,7 @@ def criar_grafico_pizza(df, coluna, titulo):
         color_discrete_sequence=px.colors.qualitative.Set3
     )
     
-    fig.update_traces(textposition='inside', textinfo='percent+label')
+    fig.update_traces(textposition=\'inside\', textinfo=\'percent+label\')
     fig.update_layout(
         font=dict(size=12),
         showlegend=True,
@@ -250,7 +250,7 @@ def criar_grafico_barras(df, x_col, y_col, titulo):
         y=y_col,
         title=titulo,
         color=y_col,
-        color_continuous_scale='Viridis'
+        color_continuous_scale=\'Viridis\'
     )
     
     fig.update_layout(
@@ -263,14 +263,6 @@ def criar_grafico_barras(df, x_col, y_col, titulo):
     return fig
 
 # ===== INTERFACE PRINCIPAL =====
-
-# ... código existente do st.file_uploader ...
-
-if st.button("Limpar Upload Atual"):
-    st.session_state["file_uploader_key"] = ""
-    st.session_state.last_uploaded_file_hash = None # Limpa o hash para permitir novo upload
-    st.rerun()
-
 
 # Header principal
 st.markdown("""
@@ -301,6 +293,11 @@ with col_upload2:
         help="Arraste e solte seu arquivo aqui ou clique para selecionar",
         key="file_uploader_key"
     )
+
+    if st.button("Limpar Upload Atual"):
+        st.session_state["file_uploader_key"] = ""
+        st.session_state.last_uploaded_file_hash = None # Limpa o hash para permitir novo upload
+        st.rerun()
 
 # Carregar dados existentes ou inicializar DataFrame na session_state
 if "df_consolidado" not in st.session_state:
@@ -334,24 +331,24 @@ if uploaded_file is not None:
         if "last_uploaded_file_hash" in st.session_state:
             del st.session_state.last_uploaded_file_hash
 
-# O DataFrame 'df' usado no restante do script deve sempre refletir o estado atual de df_consolidado
+# O DataFrame \'df\' usado no restante do script deve sempre refletir o estado atual de df_consolidado
 df = st.session_state.df_consolidado
 
 
 if not df.empty:
     # ===== DEFINIÇÃO DAS COLUNAS =====
-    COLUMN_DATA = 'data'
-    COLUMN_VALOR_TOTAL = 'valor total'
-    COLUMN_QUANTIDADE = 'quantidade'
-    COLUMN_TAXA = 'taxa'
-    COLUMN_RENDA_ESTIMADA = 'renda estimada'
-    COLUMN_SUBTOTAL_PRODUTO = 'subtotal do produto'
-    COLUMN_TAMANHO = 'tamanho'
-    COLUMN_PRODUTO = 'produto'
-    COLUMN_TIPO = 'tipo'
-    COLUMN_STATUS = 'status'
-    COLUMN_DEVOLUCAO = 'quantidade devolução'
-    COLUMN_UF = 'uf'
+    COLUMN_DATA = \'data\'
+    COLUMN_VALOR_TOTAL = \'valor total\'
+    COLUMN_QUANTIDADE = \'quantidade\'
+    COLUMN_TAXA = \'taxa\'
+    COLUMN_RENDA_ESTIMADA = \'renda estimada\'
+    COLUMN_SUBTOTAL_PRODUTO = \'subtotal do produto\'
+    COLUMN_TAMANHO = \'tamanho\'
+    COLUMN_PRODUTO = \'produto\'
+    COLUMN_TIPO = \'tipo\'
+    COLUMN_STATUS = \'status\'
+    COLUMN_DEVOLUCAO = \'quantidade devolução\'
+    COLUMN_UF = \'uf\'
     
     # ===== PROCESSAMENTO DOS DADOS =====
     
@@ -359,17 +356,17 @@ if not df.empty:
     colunas_numericas = [COLUMN_VALOR_TOTAL, COLUMN_RENDA_ESTIMADA, COLUMN_SUBTOTAL_PRODUTO, COLUMN_TAXA, COLUMN_DEVOLUCAO]
     for col in colunas_numericas:
         if col in df.columns:
-            df[col] = pd.to_numeric(df[col], errors='coerce')
+            df[col] = pd.to_numeric(df[col], errors=\'coerce\')
     
     # Processamento de datas
     if COLUMN_DATA in df.columns:
         try:
-            df[COLUMN_DATA] = pd.to_datetime(df[COLUMN_DATA], format='%d/%m/%Y', errors='coerce')
+            df[COLUMN_DATA] = pd.to_datetime(df[COLUMN_DATA], format=\'%d/%m/%Y\', errors=\'coerce\')
             df.dropna(subset=[COLUMN_DATA], inplace=True)
-            df['mês'] = df[COLUMN_DATA].dt.month.apply(lambda x: calendar.month_name[x].capitalize())
-            df['ano'] = df[COLUMN_DATA].dt.year
+            df[\'mês\'] = df[COLUMN_DATA].dt.month.apply(lambda x: calendar.month_name[x].capitalize())
+            df[\'ano\'] = df[COLUMN_DATA].dt.year
         except Exception as e:
-            st.warning(f"⚠️ Não foi possível converter a coluna '{COLUMN_DATA}' para o formato de data.")
+            st.warning(f"⚠️ Não foi possível converter a coluna \'{COLUMN_DATA}\' para o formato de data.")
     
     # ===== INFORMAÇÕES GERAIS =====
     st.markdown("""
@@ -396,8 +393,8 @@ if not df.empty:
     
     with col_info3:
         if COLUMN_DATA in df.columns and not df[COLUMN_DATA].empty and not pd.isna(df[COLUMN_DATA].min()):
-            min_date = df[COLUMN_DATA].min().strftime('%m/%Y')
-            max_date = df[COLUMN_DATA].max().strftime('%m/%Y')
+            min_date = df[COLUMN_DATA].min().strftime(\'%m/%Y\')
+            max_date = df[COLUMN_DATA].max().strftime(\'%m/%Y\')
             st.markdown(f"""
             <div class="metric-card">
                 <h3>📅 Período</h3>
@@ -433,18 +430,18 @@ if not df.empty:
     st.sidebar.markdown("---")
     
     # Filtro de mês
-    if 'mês' in df.columns:
-        meses_en = ['January', 'February', 'March', 'April', 'May', 'June', 
-                   'July', 'August', 'September', 'October', 'November', 'December']
-        all_meses = sorted(df['mês'].unique(), key=lambda x: meses_en.index(x))
+    if \'mês\' in df.columns:
+        meses_en = [\'January\', \'February\', \'March\', \'April\', \'May\', \'June\', 
+                   \'July\', \'August\', \'September\', \'October\', \'November\', \'December\']
+        all_meses = sorted(df[\'mês\'].unique(), key=lambda x: meses_en.index(x))
         selected_mes = st.sidebar.selectbox("📅 Selecione o Mês:", ["Todos"] + all_meses)
     else:
         selected_mes = "Todos"
     
     # Filtro de tamanho
     if COLUMN_TAMANHO in df.columns:
-        df[COLUMN_TAMANHO] = pd.to_numeric(df[COLUMN_TAMANHO], errors='coerce').astype('Int64')
-        df[COLUMN_TAMANHO] = df[COLUMN_TAMANHO].astype(str).str.replace('<NA>', 'NaN')
+        df[COLUMN_TAMANHO] = pd.to_numeric(df[COLUMN_TAMANHO], errors=\'coerce\').astype(\'Int64\')
+        df[COLUMN_TAMANHO] = df[COLUMN_TAMANHO].astype(str).str.replace(\'<NA>\', \'NaN\')
         all_tamanhos = sorted(df[COLUMN_TAMANHO].unique())
         selected_tamanhos = st.sidebar.multiselect("📏 Selecione os Tamanhos:", all_tamanhos, default=all_tamanhos)
     else:
@@ -469,7 +466,7 @@ if not df.empty:
     # Aplicar filtros
     df_filtrado = df.copy()
     if selected_mes != "Todos":
-        df_filtrado = df_filtrado[df_filtrado['mês'] == selected_mes]
+        df_filtrado = df_filtrado[df_filtrado[\'mês\'] == selected_mes]
     if selected_tamanhos:
         df_filtrado = df_filtrado[df_filtrado[COLUMN_TAMANHO].isin(selected_tamanhos)]
     if selected_produtos:
@@ -549,8 +546,8 @@ if not df.empty:
     
     with col_graf1:
         st.subheader("📈 Vendas por Mês")
-        if 'mês' in df_filtrado.columns and COLUMN_VALOR_TOTAL in df_filtrado.columns:
-            fig_mes = criar_grafico_barras(df_filtrado, 'mês', COLUMN_VALOR_TOTAL, "Vendas por Mês")
+        if \'mês\' in df_filtrado.columns and COLUMN_VALOR_TOTAL in df_filtrado.columns:
+            fig_mes = criar_grafico_barras(df_filtrado, \'mês\', COLUMN_VALOR_TOTAL, "Vendas por Mês")
             if fig_mes:
                 st.plotly_chart(fig_mes, use_container_width=True)
     
@@ -595,9 +592,9 @@ if not df.empty:
     
     with tab2:
         st.subheader("Análise Temporal - Quantidade por Mês e Tamanho")
-        if 'mês' in df_filtrado.columns and COLUMN_TAMANHO in df_filtrado.columns and COLUMN_QUANTIDADE in df_filtrado.columns:
-            tabela_mes_tamanho = df_filtrado.groupby(['mês', COLUMN_TAMANHO])[COLUMN_QUANTIDADE].sum().reset_index()
-            tabela_pivot = tabela_mes_tamanho.pivot(index='mês', columns=COLUMN_TAMANHO, values=COLUMN_QUANTIDADE).fillna(0)
+        if \'mês\' in df_filtrado.columns and COLUMN_TAMANHO in df_filtrado.columns and COLUMN_QUANTIDADE in df_filtrado.columns:
+            tabela_mes_tamanho = df_filtrado.groupby([\'mês\', COLUMN_TAMANHO])[COLUMN_QUANTIDADE].sum().reset_index()
+            tabela_pivot = tabela_mes_tamanho.pivot(index=\'mês\', columns=COLUMN_TAMANHO, values=COLUMN_QUANTIDADE).fillna(0)
             st.dataframe(tabela_pivot, use_container_width=True)
     
     with tab3:
@@ -638,7 +635,7 @@ if not df.empty:
             st.download_button(
                 label="⬇️ Baixar CSV",
                 data=csv,
-                file_name=f"dados_filtrados_{pd.Timestamp.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                file_name=f"dados_filtrados_{pd.Timestamp.now().strftime(\'%Y%m%d_%H%M%S\')}.csv",
                 mime="text/csv"
             )
     
@@ -683,4 +680,3 @@ if st.sidebar.button("Limpar Todos os Dados Consolidados"):
         st.rerun()
     else:
         st.sidebar.info("ℹ️ Nenhum dado consolidado para limpar.")
-
