@@ -337,18 +337,18 @@ df = st.session_state.df_consolidado
 
 if not df.empty:
     # ===== DEFINIÇÃO DAS COLUNAS =====
-    COLUMN_DATA = \'data\'
-    COLUMN_VALOR_TOTAL = \'valor total\'
-    COLUMN_QUANTIDADE = \'quantidade\'
-    COLUMN_TAXA = \'taxa\'
-    COLUMN_RENDA_ESTIMADA = \'renda estimada\'
-    COLUMN_SUBTOTAL_PRODUTO = \'subtotal do produto\'
-    COLUMN_TAMANHO = \'tamanho\'
-    COLUMN_PRODUTO = \'produto\'
-    COLUMN_TIPO = \'tipo\'
-    COLUMN_STATUS = \'status\'
-    COLUMN_DEVOLUCAO = \'quantidade devolução\'
-    COLUMN_UF = \'uf\'
+    COLUMN_DATA = 'data'
+    COLUMN_VALOR_TOTAL = 'valor total'
+    COLUMN_QUANTIDADE = 'quantidade'
+    COLUMN_TAXA = 'taxa'
+    COLUMN_RENDA_ESTIMADA = 'renda estimada'
+    COLUMN_SUBTOTAL_PRODUTO = 'subtotal do produto'
+    COLUMN_TAMANHO = 'tamanho'
+    COLUMN_PRODUTO = 'produto'
+    COLUMN_TIPO = 'tipo'
+    COLUMN_STATUS = 'status'
+    COLUMN_DEVOLUCAO = 'quantidade devolução'
+    COLUMN_UF = 'uf'
     
     # ===== PROCESSAMENTO DOS DADOS =====
     
@@ -356,17 +356,17 @@ if not df.empty:
     colunas_numericas = [COLUMN_VALOR_TOTAL, COLUMN_RENDA_ESTIMADA, COLUMN_SUBTOTAL_PRODUTO, COLUMN_TAXA, COLUMN_DEVOLUCAO]
     for col in colunas_numericas:
         if col in df.columns:
-            df[col] = pd.to_numeric(df[col], errors=\'coerce\')
+            df[col] = pd.to_numeric(df[col], errors='coerce')
     
     # Processamento de datas
     if COLUMN_DATA in df.columns:
         try:
-            df[COLUMN_DATA] = pd.to_datetime(df[COLUMN_DATA], format=\'%d/%m/%Y\', errors=\'coerce\')
+            df[COLUMN_DATA] = pd.to_datetime(df[COLUMN_DATA], format='%d/%m/%Y', errors='coerce')
             df.dropna(subset=[COLUMN_DATA], inplace=True)
             df[\'mês\'] = df[COLUMN_DATA].dt.month.apply(lambda x: calendar.month_name[x].capitalize())
             df[\'ano\'] = df[COLUMN_DATA].dt.year
         except Exception as e:
-            st.warning(f"⚠️ Não foi possível converter a coluna \'{COLUMN_DATA}\' para o formato de data.")
+            st.warning(f"⚠️ Não foi possível converter a coluna '{COLUMN_DATA}' para o formato de data.")
     
     # ===== INFORMAÇÕES GERAIS =====
     st.markdown("""
