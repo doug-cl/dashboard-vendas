@@ -19,11 +19,11 @@ st.set_page_config(
 st.markdown("""
 <style>
     /* Importar fonte Google */
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap' );
+    @import url(\'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap\' );
     
     /* Estilo geral */
     .main {
-        font-family: 'Inter', sans-serif;
+        font-family: \'Inter\', sans-serif;
     }
     
     /* Header principal */
@@ -179,7 +179,7 @@ def processar_arquivo(uploaded_file):
         if file_extension == "csv":
             df = pd.read_csv(uploaded_file, decimal=",", encoding="utf-8")
         elif file_extension in ["xlsx", "xls"]:
-            df = pd.read_excel(uploaded_file, engine='openpyxl')
+            df = pd.read_excel(uploaded_file, engine=\'openpyxl\')
         else:
             st.error("❌ Formato de arquivo não suportado. Por favor, envie um arquivo .csv, .xlsx ou .xls.")
             return None
@@ -226,7 +226,7 @@ def criar_grafico_pizza(df, coluna, titulo):
         color_discrete_sequence=px.colors.qualitative.Set3
     )
     
-    fig.update_traces(textposition='inside', textinfo='percent+label')
+    fig.update_traces(textposition=\'inside\', textinfo=\'percent+label\')
     fig.update_layout(
         font=dict(size=12),
         showlegend=True,
@@ -250,7 +250,7 @@ def criar_grafico_barras(df, x_col, y_col, titulo):
         y=y_col,
         title=titulo,
         color=y_col,
-        color_continuous_scale='Viridis'
+        color_continuous_scale=\'Viridis\'
     )
     
     fig.update_layout(
@@ -337,18 +337,18 @@ df = st.session_state.df_consolidado
 
 if not df.empty:
     # ===== DEFINIÇÃO DAS COLUNAS =====
-    COLUMN_DATA = 'data'
-    COLUMN_VALOR_TOTAL = 'valor total'
-    COLUMN_QUANTIDADE = 'quantidade'
-    COLUMN_TAXA = 'taxa'
-    COLUMN_RENDA_ESTIMADA = 'renda estimada'
-    COLUMN_SUBTOTAL_PRODUTO = 'subtotal do produto'
-    COLUMN_TAMANHO = 'tamanho'
-    COLUMN_PRODUTO = 'produto'
-    COLUMN_TIPO = 'tipo'
-    COLUMN_STATUS = 'status'
-    COLUMN_DEVOLUCAO = 'quantidade devolução'
-    COLUMN_UF = 'uf'
+    COLUMN_DATA = \'data\'
+    COLUMN_VALOR_TOTAL = \'valor total\'
+    COLUMN_QUANTIDADE = \'quantidade\'
+    COLUMN_TAXA = \'taxa\'
+    COLUMN_RENDA_ESTIMADA = \'renda estimada\'
+    COLUMN_SUBTOTAL_PRODUTO = \'subtotal do produto\'
+    COLUMN_TAMANHO = \'tamanho\'
+    COLUMN_PRODUTO = \'produto\'
+    COLUMN_TIPO = \'tipo\'
+    COLUMN_STATUS = \'status\'
+    COLUMN_DEVOLUCAO = \'quantidade devolução\'
+    COLUMN_UF = \'uf\'
     
     # ===== PROCESSAMENTO DOS DADOS =====
     
@@ -356,17 +356,17 @@ if not df.empty:
     colunas_numericas = [COLUMN_VALOR_TOTAL, COLUMN_RENDA_ESTIMADA, COLUMN_SUBTOTAL_PRODUTO, COLUMN_TAXA, COLUMN_DEVOLUCAO]
     for col in colunas_numericas:
         if col in df.columns:
-            df[col] = pd.to_numeric(df[col], errors='coerce')
+            df[col] = pd.to_numeric(df[col], errors=\'coerce\')
     
     # Processamento de datas
     if COLUMN_DATA in df.columns:
         try:
-            df[COLUMN_DATA] = pd.to_datetime(df[COLUMN_DATA], format='%d/%m/%Y', errors='coerce')
+            df[COLUMN_DATA] = pd.to_datetime(df[COLUMN_DATA], format=\'%d/%m/%Y\', errors=\'coerce\')
             df.dropna(subset=[COLUMN_DATA], inplace=True)
             df[\'mês\'] = df[COLUMN_DATA].dt.month.apply(lambda x: calendar.month_name[x].capitalize())
             df[\'ano\'] = df[COLUMN_DATA].dt.year
         except Exception as e:
-            st.warning(f"⚠️ Não foi possível converter a coluna '{COLUMN_DATA}' para o formato de data.")
+            st.warning(f"⚠️ Não foi possível converter a coluna \'{COLUMN_DATA}\' para o formato de data.")
     
     # ===== INFORMAÇÕES GERAIS =====
     st.markdown("""
