@@ -19,11 +19,11 @@ st.set_page_config(
 st.markdown("""
 <style>
     /* Importar fonte Google */
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap' );
+    @import url(\'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap\' );
     
     /* Estilo geral */
     .main {
-        font-family: 'Inter', sans-serif;
+        font-family: \'Inter\', sans-serif;
     }
     
     /* Header principal */
@@ -55,7 +55,7 @@ st.markdown("""
         background: white;
         padding: 1.5rem;
         border-radius: 10px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         border-left: 4px solid #667eea;
         margin-bottom: 1rem;
         transition: transform 0.2s ease;
@@ -70,7 +70,7 @@ st.markdown("""
     
     .metric-card:hover {
         transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
     }
     
     /* Seções */
@@ -103,7 +103,7 @@ st.markdown("""
     .dataframe {
         border-radius: 8px;
         overflow: hidden;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
     
     /* Alertas customizados */
@@ -179,7 +179,7 @@ def processar_arquivo(uploaded_file):
         if file_extension == "csv":
             df = pd.read_csv(uploaded_file, decimal=",", encoding="utf-8")
         elif file_extension in ["xlsx", "xls"]:
-            df = pd.read_excel(uploaded_file, engine='openpyxl')
+            df = pd.read_excel(uploaded_file, engine=\'openpyxl\')
         else:
             st.error("❌ Formato de arquivo não suportado. Por favor, envie um arquivo .csv, .xlsx ou .xls.")
             return None
@@ -226,7 +226,7 @@ def criar_grafico_pizza(df, coluna, titulo):
         color_discrete_sequence=px.colors.qualitative.Set3
     )
     
-    fig.update_traces(textposition='inside', textinfo='percent+label')
+    fig.update_traces(textposition=\'inside\', textinfo=\'percent+label\')
     fig.update_layout(
         font=dict(size=12),
         showlegend=True,
@@ -250,7 +250,7 @@ def criar_grafico_barras(df, x_col, y_col, titulo):
         y=y_col,
         title=titulo,
         color=y_col,
-        color_continuous_scale='Viridis'
+        color_continuous_scale=\'Viridis\'
     )
     
     fig.update_layout(
@@ -313,6 +313,7 @@ if uploaded_file is not None:
         if novo_df is not None:
             # Concatenar com dados existentes
             if not st.session_state.df_consolidado.empty:
+                # Verificar se as colunas são compatíveis antes de concatenar
                 common_cols = list(set(st.session_state.df_consolidado.columns) & set(novo_df.columns))
                 if common_cols:
                     st.session_state.df_consolidado = pd.concat([st.session_state.df_consolidado[common_cols], novo_df[common_cols]], ignore_index=True)
@@ -479,7 +480,7 @@ if not df.empty:
     st.sidebar.markdown(f"""
     <div class="stats-container">
         <h4>📊 Dados Filtrados</h4>
-        <p><strong>Registros:</strong> {df_filtrado.shape[0]:,}</p>
+        <p><strong>Registros:</strong> {df_filtrado.shape[0]:,} Registros</p>
         <p><strong>% do Total:</strong> {((df_filtrado.shape[0]/df.shape[0]*100) if df.shape[0] > 0 else 0.0):.1f}%</p>
     </div>
     """, unsafe_allow_html=True)
