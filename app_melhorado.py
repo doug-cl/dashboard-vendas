@@ -19,11 +19,11 @@ st.set_page_config(
 st.markdown("""
 <style>
     /* Importar fonte Google */
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap' );
+    @import url(\'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap\' );
     
     /* Estilo geral */
     .main {
-        font-family: 'Inter', sans-serif;
+        font-family: \'Inter\', sans-serif;
     }
     
     /* Header principal */
@@ -179,7 +179,7 @@ def processar_arquivo(uploaded_file):
         if file_extension == "csv":
             df = pd.read_csv(uploaded_file, decimal=",", encoding="utf-8")
         elif file_extension in ["xlsx", "xls"]:
-            df = pd.read_excel(uploaded_file, engine='openpyxl') # Corrigido aqui
+            df = pd.read_excel(uploaded_file, engine="openpyxl") # Corrigido aqui
         else:
             st.error("❌ Formato de arquivo não suportado. Por favor, envie um arquivo .csv, .xlsx ou .xls.")
             return None
@@ -226,7 +226,7 @@ def criar_grafico_pizza(df, coluna, titulo):
         color_discrete_sequence=px.colors.qualitative.Set3
     )
     
-    fig.update_traces(textposition='inside', textinfo='percent+label') # Corrigido aqui
+    fig.update_traces(textposition="inside", textinfo="percent+label") # Corrigido aqui
     fig.update_layout(
         font=dict(size=12),
         showlegend=True,
@@ -250,7 +250,7 @@ def criar_grafico_barras(df, x_col, y_col, titulo):
         y=y_col,
         title=titulo,
         color=y_col,
-        color_continuous_scale='Viridis'
+        color_continuous_scale="Viridis"
     )
     
     fig.update_layout(
