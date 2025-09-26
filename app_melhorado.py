@@ -306,7 +306,7 @@ if uploaded_file is not None:
             st.session_state.df_consolidado = novo_df
         
         salvar_dados(st.session_state.df_consolidado)
-        st.experimental_rerun()
+        st.rerun()
 
 df = st.session_state.df_consolidado
 
