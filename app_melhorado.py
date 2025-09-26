@@ -1,3 +1,6 @@
+
+
+
 import streamlit as st
 import pandas as pd
 import calendar
@@ -19,11 +22,11 @@ st.set_page_config(
 st.markdown("""
 <style>
     /* Importar fonte Google */
-    @import url(\'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap\' );
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
     
     /* Estilo geral */
     .main {
-        font-family: \'Inter\', sans-serif;
+        font-family: 'Inter', sans-serif;
     }
     
     /* Header principal */
@@ -59,13 +62,6 @@ st.markdown("""
         border-left: 4px solid #667eea;
         margin-bottom: 1rem;
         transition: transform 0.2s ease;
-    }
-    
-    .metric-card h3 {
-        color: #333333; /* Um cinza escuro para melhor contraste */
-        font-size: 1rem;
-        margin-top: 0;
-        margin-bottom: 0.5rem;
     }
     
     .metric-card:hover {
@@ -179,7 +175,7 @@ def processar_arquivo(uploaded_file):
         if file_extension == "csv":
             df = pd.read_csv(uploaded_file, decimal=",", encoding="utf-8")
         elif file_extension in ["xlsx", "xls"]:
-            df = pd.read_excel(uploaded_file, engine="openpyxl") # Corrigido aqui
+            df = pd.read_excel(uploaded_file, engine='openpyxl')
         else:
             st.error("❌ Formato de arquivo não suportado. Por favor, envie um arquivo .csv, .xlsx ou .xls.")
             return None
@@ -226,7 +222,7 @@ def criar_grafico_pizza(df, coluna, titulo):
         color_discrete_sequence=px.colors.qualitative.Set3
     )
     
-    fig.update_traces(textposition="inside", textinfo="percent+label") # Corrigido aqui
+    fig.update_traces(textposition='inside', textinfo='percent+label')
     fig.update_layout(
         font=dict(size=12),
         showlegend=True,
@@ -250,7 +246,7 @@ def criar_grafico_barras(df, x_col, y_col, titulo):
         y=y_col,
         title=titulo,
         color=y_col,
-        color_continuous_scale="Viridis"
+        color_continuous_scale='Viridis'
     )
     
     fig.update_layout(
@@ -273,9 +269,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ===== UPLOAD DO ARQUIVO =====
-st.markdown("""
-<div class="section-header">📁 Upload do Arquivo de Dados</div>
-""", unsafe_allow_html=True)
+st.markdown('<div class="section-header">📁 Upload do Arquivo de Dados</div>', unsafe_allow_html=True)
 
 col_upload1, col_upload2, col_upload3 = st.columns([1, 2, 1])
 
@@ -286,55 +280,35 @@ with col_upload2:
         <p>Suportamos arquivos CSV, Excel (.xlsx) e Excel antigo (.xls)</p>
     </div>
     """, unsafe_allow_html=True)
+
     
-    uploaded_file = st.file_uploader(
+    
+uploaded_file = st.file_uploader(
         "Escolha um arquivo",
         type=["csv", "xlsx", "xls"],
-        help="Arraste e solte seu arquivo aqui ou clique para selecionar",
-        key="file_uploader_key"
+        help="Arraste e solte seu arquivo aqui ou clique para selecionar"
     )
 
-    if st.button("Limpar Upload Atual"):
-        st.session_state["file_uploader_key"] = ""
-        st.session_state.last_uploaded_file_hash = None # Limpa o hash para permitir novo upload
-        st.rerun()
 
-# Carregar dados existentes ou inicializar DataFrame na session_state
+# Carregar dados existentes ou inicializar DataFrame
 if "df_consolidado" not in st.session_state:
     st.session_state.df_consolidado = carregar_dados_existentes()
 
-# Processar o arquivo carregado apenas se houver um e ele ainda não foi processado
 if uploaded_file is not None:
-    # Usar um hash do arquivo para verificar se já foi processado nesta sessão
-    file_hash = hash(uploaded_file.getvalue())
-    if "last_uploaded_file_hash" not in st.session_state or st.session_state.last_uploaded_file_hash != file_hash:
-        novo_df = processar_arquivo(uploaded_file)
+    novo_df = processar_arquivo(uploaded_file)
+    
+    if novo_df is not None:
+        # Concatenar com dados existentes
+        if not st.session_state.df_consolidado.empty:
+            common_cols = list(set(st.session_state.df_consolidado.columns) & set(novo_df.columns))
+            st.session_state.df_consolidado = pd.concat([st.session_state.df_consolidado[common_cols], novo_df[common_cols]], ignore_index=True)
+        else:
+            st.session_state.df_consolidado = novo_df
         
-        if novo_df is not None:
-            # Concatenar com dados existentes
-            if not st.session_state.df_consolidado.empty:
-                # Verificar se as colunas são compatíveis antes de concatenar
-                common_cols = list(set(st.session_state.df_consolidado.columns) & set(novo_df.columns))
-                if common_cols:
-                    st.session_state.df_consolidado = pd.concat([st.session_state.df_consolidado[common_cols], novo_df[common_cols]], ignore_index=True)
-                else:
-                    st.sidebar.warning("⚠️ As colunas do novo arquivo não são compatíveis com os dados existentes. O novo arquivo não foi adicionado.")
-            else:
-                st.session_state.df_consolidado = novo_df
-            
-            salvar_dados(st.session_state.df_consolidado)
-            st.session_state.last_uploaded_file_hash = file_hash # Armazena o hash do arquivo processado
-            st.success("✅ Arquivo carregado e dados consolidados com sucesso! Atualizando dashboard...")
-            st.rerun()
-    else:
-        # Se uploaded_file é None e last_uploaded_file_hash existe, significa que o widget foi limpo
-        # ou a página foi recarregada sem um novo upload. Resetar o hash para permitir novo upload.
-        if "last_uploaded_file_hash" in st.session_state:
-            del st.session_state.last_uploaded_file_hash
+        salvar_dados(st.session_state.df_consolidado)
+        st.experimental_rerun()
 
-# O DataFrame 'df' usado no restante do script deve sempre refletir o estado atual de df_consolidado
 df = st.session_state.df_consolidado
-
 
 if not df.empty:
     # ===== DEFINIÇÃO DAS COLUNAS =====
@@ -370,9 +344,7 @@ if not df.empty:
             st.warning(f"⚠️ Não foi possível converter a coluna '{COLUMN_DATA}' para o formato de data.")
     
     # ===== INFORMAÇÕES GERAIS =====
-    st.markdown("""
-    <div class="section-header">📋 Informações Gerais do Dataset</div>
-    """, unsafe_allow_html=True)
+    st.markdown('<div class="section-header">📋 Informações Gerais do Dataset</div>', unsafe_allow_html=True)
     
     col_info1, col_info2, col_info3, col_info4 = st.columns(4)
     
@@ -393,38 +365,24 @@ if not df.empty:
         """, unsafe_allow_html=True)
     
     with col_info3:
-        if COLUMN_DATA in df.columns and not df[COLUMN_DATA].empty and not pd.isna(df[COLUMN_DATA].min()):
-            min_date = df[COLUMN_DATA].min().strftime('%m/%Y')
-            max_date = df[COLUMN_DATA].max().strftime('%m/%Y')
-            st.markdown(f"""
-            <div class="metric-card">
-                <h3>📅 Período</h3>
-                <h2 style="color: #667eea;">
-                    {min_date} - {max_date}
-                </h2>
-            </div>
-            """, unsafe_allow_html=True)
-        else:
-            st.markdown(f"""
-            <div class="metric-card">
-                <h3>📅 Período</h3>
-                <h2 style="color: #667eea;">N/A</h2>
-            </div>
-            """, unsafe_allow_html=True)
-
-    with col_info4:
-        if os.path.exists(DATA_FILE):
-            file_size_bytes = os.path.getsize(DATA_FILE)
-            file_size_kb = file_size_bytes / 1024
-        else:
-            file_size_kb = 0
-
         st.markdown(f"""
         <div class="metric-card">
-            <h3>💾 Tamanho do Arquivo</h3>
-            <h2 style="color: #667eea;">{file_size_kb:.1f} KB</h2>
+            <h3>📅 Período</h3>
+            <h2 style="color: #667eea;">
+                {df[COLUMN_DATA].min().strftime('%m/%Y') if COLUMN_DATA in df.columns and pd.notna(df[COLUMN_DATA].min()) else 'N/A'} - 
+                {df[COLUMN_DATA].max().strftime("%m/%Y") if COLUMN_DATA in df.columns and pd.notna(df[COLUMN_DATA].max()) else 'N/A'}
+            </h2>
         </div>
         """, unsafe_allow_html=True)
+    
+        with col_info4:
+            file_size_kb = uploaded_file.size / 1024 if uploaded_file else 0
+            st.markdown(f"""
+            <div class="metric-card">
+                <h3>💾 Tamanho do Arquivo</h3>
+                <h2 style="color: #667eea;">{file_size_kb:.1f} KB</h2>
+            </div>
+            """, unsafe_allow_html=True) # Note: uploaded_file.size will only be available if a file was just uploaded
     
     # ===== SIDEBAR DE FILTROS =====
     st.sidebar.markdown("## 🔍 Filtros Avançados")
@@ -444,7 +402,7 @@ if not df.empty:
         df[COLUMN_TAMANHO] = pd.to_numeric(df[COLUMN_TAMANHO], errors='coerce').astype('Int64')
         df[COLUMN_TAMANHO] = df[COLUMN_TAMANHO].astype(str).str.replace('<NA>', 'NaN')
         all_tamanhos = sorted(df[COLUMN_TAMANHO].unique())
-        selected_tamanhos = st.sidebar.multiselect("📏 Selecione os Tamanhos:", all_tamanhos, default=all_tamanhos)
+        selected_tamanhos = st.sidebar.multiselect("📏 Selecione os Tamanhos:", all_tamanhos, default=[])
     else:
         selected_tamanhos = []
     
@@ -452,7 +410,7 @@ if not df.empty:
     if COLUMN_PRODUTO in df.columns:
         df[COLUMN_PRODUTO] = df[COLUMN_PRODUTO].astype(str)
         all_produtos = sorted(df[COLUMN_PRODUTO].unique())
-        selected_produtos = st.sidebar.multiselect("🛍️ Selecione os Produtos:", all_produtos, default=all_produtos)
+        selected_produtos = st.sidebar.multiselect("🛍️ Selecione os Produtos:", all_produtos, default=[])
     else:
         selected_produtos = []
     
@@ -460,14 +418,14 @@ if not df.empty:
     if COLUMN_STATUS in df.columns:
         df[COLUMN_STATUS] = df[COLUMN_STATUS].astype(str)
         all_status = sorted(df[COLUMN_STATUS].unique())
-        selected_status = st.sidebar.multiselect("📊 Selecione o Status:", all_status, default=all_status)
+        selected_status = st.sidebar.multiselect("📊 Selecione o Status:", all_status, default=[])
     else:
         selected_status = []
     
     # Aplicar filtros
-    df_filtrado = df.copy() # Garante que a filtragem começa do DataFrame original
-    if selected_mes != "Todos":
-        df_filtrado = df_filtrado[df_filtrado['mês'] == selected_mes]
+    df_filtrado = df.copy()
+    if selected_mes and selected_mes != "Todos":
+        df_filtrado = df_filtrado[df_filtrado["mês"] == selected_mes]
     if selected_tamanhos:
         df_filtrado = df_filtrado[df_filtrado[COLUMN_TAMANHO].isin(selected_tamanhos)]
     if selected_produtos:
@@ -480,15 +438,13 @@ if not df.empty:
     st.sidebar.markdown(f"""
     <div class="stats-container">
         <h4>📊 Dados Filtrados</h4>
-        <p><strong>Registros:</strong> {df_filtrado.shape[0]:,} Registros</p>
-        <p><strong>% do Total:</strong> {((df_filtrado.shape[0]/df.shape[0]*100) if df.shape[0] > 0 else 0.0):.1f}%</p>
+        <p><strong>Registros:</strong> {df_filtrado.shape[0]:,}</p>
+        <p><strong>% do Total:</strong> {((df_filtrado.shape[0]/df.shape[0]*100) if df.shape[0] > 0 else 0):.1f}%</p>
     </div>
     """, unsafe_allow_html=True)
     
     # ===== PAINEL DE KPIs =====
-    st.markdown("""
-    <div class="section-header">💰 Indicadores Principais (KPIs)</div>
-    """, unsafe_allow_html=True)
+    st.markdown('<div class="section-header">💰 Indicadores Principais (KPIs)</div>', unsafe_allow_html=True)
     
     col1, col2, col3, col4, col5 = st.columns(5)
     
@@ -498,7 +454,7 @@ if not df.empty:
             st.metric(
                 "💵 Valor Total",
                 f"R$ {formatar_numero(valor_total)}",
-                delta=f"{(valor_total/df[COLUMN_VALOR_TOTAL].sum()*100) if df[COLUMN_VALOR_TOTAL].sum() > 0 else 0.0:.1f}% do total"
+                delta=f"{(valor_total/df[COLUMN_VALOR_TOTAL].sum()*100):.1f}% do total"
             )
     
     with col2:
@@ -507,7 +463,7 @@ if not df.empty:
             st.metric(
                 "📦 Quantidade Total",
                 f"{qtd_total:,}",
-                delta=f"{(qtd_total/df[COLUMN_QUANTIDADE].sum()*100) if df[COLUMN_QUANTIDADE].sum() > 0 else 0.0:.1f}% do total"
+                delta=f"{(qtd_total/df[COLUMN_QUANTIDADE].sum()*100):.1f}% do total"
             )
     
     with col3:
@@ -516,7 +472,7 @@ if not df.empty:
             st.metric(
                 "💳 Soma da Taxa",
                 formatar_numero(taxa_total),
-                delta=f"{(taxa_total/df[COLUMN_TAXA].sum()*100) if df[COLUMN_TAXA].sum() > 0 else 0.0:.1f}% do total"
+                delta=f"{(taxa_total/df[COLUMN_TAXA].sum()*100):.1f}% do total"
             )
     
     with col4:
@@ -525,7 +481,7 @@ if not df.empty:
             st.metric(
                 "💰 Renda Estimada",
                 f"R$ {formatar_numero(renda_total)}",
-                delta=f"{(renda_total/df[COLUMN_RENDA_ESTIMADA].sum()*100) if df[COLUMN_RENDA_ESTIMADA].sum() > 0 else 0.0:.1f}% do total"
+                delta=f"{(renda_total/df[COLUMN_RENDA_ESTIMADA].sum()*100):.1f}% do total"
             )
     
     with col5:
@@ -534,19 +490,20 @@ if not df.empty:
             st.metric(
                 "🛒 Subtotal do Produto",
                 f"R$ {formatar_numero(subtotal)}",
-                delta=f"{(subtotal/df[COLUMN_SUBTOTAL_PRODUTO].sum()*100) if df[COLUMN_SUBTOTAL_PRODUTO].sum() > 0 else 0.0:.1f}% do total"
+                delta=f"{(subtotal/df[COLUMN_SUBTOTAL_PRODUTO].sum()*100):.1f}% do total"
             )
     
     # ===== ANÁLISES VISUAIS =====
-    st.markdown("""
-    <div class="section-header">📊 Análises Visuais Interativas</div>
-    """, unsafe_allow_html=True)
+    st.markdown('<div class="section-header">📊 Análises Visuais Interativas</div>', unsafe_allow_html=True)
     
     # Gráficos em duas colunas
     col_graf1, col_graf2 = st.columns(2)
     
     with col_graf1:
         st.subheader("📈 Vendas por Mês")
+
+
+
         if 'mês' in df_filtrado.columns and COLUMN_VALOR_TOTAL in df_filtrado.columns:
             fig_mes = criar_grafico_barras(df_filtrado, 'mês', COLUMN_VALOR_TOTAL, "Vendas por Mês")
             if fig_mes:
@@ -567,9 +524,7 @@ if not df.empty:
             st.plotly_chart(fig_devolucao, use_container_width=True)
     
     # ===== TABELAS ANALÍTICAS =====
-    st.markdown("""
-    <div class="section-header">📋 Tabelas Analíticas Detalhadas</div>
-    """, unsafe_allow_html=True)
+    st.markdown('<div class="section-header">📋 Tabelas Analíticas Detalhadas</div>', unsafe_allow_html=True)
     
     # Abas para organizar as tabelas
     tab1, tab2, tab3, tab4 = st.tabs(["📦 Por Tamanho", "🗓️ Por Mês", "🌍 Por UF", "📊 Resumo Geral"])
@@ -613,9 +568,7 @@ if not df.empty:
             st.dataframe(resumo_stats, use_container_width=True)
     
     # ===== VISUALIZAÇÃO PERSONALIZADA =====
-    st.markdown("""
-    <div class="section-header">🔍 Exploração Personalizada dos Dados</div>
-    """, unsafe_allow_html=True)
+    st.markdown('<div class="section-header">🔍 Exploração Personalizada dos Dados</div>', unsafe_allow_html=True)
     
     col_custom1, col_custom2 = st.columns([2, 1])
     
@@ -670,14 +623,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# ===== GERENCIAMENTO DE DADOS (SIDEBAR) =====
-st.sidebar.markdown("---")
-st.sidebar.markdown("## 🗑️ Gerenciamento de Dados")
-if st.sidebar.button("Limpar Todos os Dados Consolidados"):
-    if os.path.exists(DATA_FILE):
-        os.remove(DATA_FILE)
-        st.sidebar.success("✅ Dados consolidados limpos com sucesso!")
-        st.session_state.df_consolidado = pd.DataFrame() # Limpa o DataFrame na sessão
-        st.rerun()
-    else:
-        st.sidebar.info("ℹ️ Nenhum dado consolidado para limpar.")
+
+
+
+
